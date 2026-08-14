@@ -1,0 +1,45 @@
+# Apache .htaccess — Root Project
+# Keamanan dasar untuk seluruh aplikasi
+
+# Sembunyikan informasi server
+ServerSignature Off
+
+# Cegah directory listing
+Options -Indexes
+
+# Cegah akses langsung ke file sensitif
+<FilesMatch "\.(sql|sqlite|sqlite3|log|env|sh|bak|old)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Proteksi file konfigurasi
+<FilesMatch "^(\.env|\.htpasswd|composer\.json|composer\.lock|package\.json|package-lock\.json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Header keamanan dasar
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# PHP session security (jika Apache yang set)
+<IfModule mod_php.c>
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+    php_value session.cookie_samesite "Lax"
+</IfModule>
