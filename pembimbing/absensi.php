@@ -60,6 +60,7 @@ $sql = "
            (SELECT COUNT(*) FROM absensi a WHERE a.sesi_absensi_id = s.id AND a.status = 'hadir') as hadir,
            (SELECT COUNT(*) FROM absensi a WHERE a.sesi_absensi_id = s.id AND a.status = 'izin') as izin,
            (SELECT COUNT(*) FROM absensi a WHERE a.sesi_absensi_id = s.id AND a.status = 'sakit') as sakit,
+           (SELECT COUNT(*) FROM absensi a WHERE a.sesi_absensi_id = s.id AND a.status = 'alpa') as alpa,
            (SELECT COUNT(*) FROM absensi a WHERE a.sesi_absensi_id = s.id) as total_absen
     FROM sesi_absensi s
     WHERE s.pembimbing_id = ?
@@ -122,6 +123,7 @@ $sesiList = $stmtSesi->fetchAll();
                                 <span class="text-success" title="Hadir"><i class="bi bi-check-circle-fill"></i> <?= $s['hadir'] ?></span>
                                 <span class="text-warning" title="Izin"><i class="bi bi-info-circle-fill"></i> <?= $s['izin'] ?></span>
                                 <span class="text-danger" title="Sakit"><i class="bi bi-heartbreak-fill"></i> <?= $s['sakit'] ?></span>
+                                <span style="color:#334155;" title="Alpa"><i class="bi bi-x-circle-fill"></i> <?= $s['alpa'] ?></span>
                             </div>
                             <div class="text-xs text-muted mt-1">Total: <?= $s['total_absen'] ?> data tercatat</div>
                         </td>

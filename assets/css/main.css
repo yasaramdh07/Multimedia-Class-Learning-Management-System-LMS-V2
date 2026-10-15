@@ -1063,3 +1063,252 @@ h1, h2, h3, h4, h5, h6 {
 .text-center { text-align: center; }
 .text-start { text-align: left; }
 .text-end { text-align: right; }
+
+/* ── 21. Modal Component ─────────────────────────────────────── */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: modalFadeIn 200ms ease forwards;
+}
+
+.modal.show {
+    display: flex;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal-dialog {
+    width: 100%;
+    max-width: 520px;
+    animation: modalSlideUp 250ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-content {
+    background: var(--clr-white);
+    border-radius: var(--radius-2xl, 1.25rem);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0,0,0,0.08);
+    border: 1px solid var(--clr-border);
+    overflow: hidden;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-5) var(--sp-6);
+    background: linear-gradient(135deg, var(--clr-primary-600) 0%, var(--clr-primary-500) 100%);
+    color: var(--clr-white);
+    flex-shrink: 0;
+}
+
+.modal-title {
+    font-family: var(--font-heading);
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.01em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.modal-title::before {
+    content: '📋';
+    font-size: 1.2em;
+}
+
+.btn-close {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: var(--clr-white);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background var(--dur-fast) ease;
+    flex-shrink: 0;
+}
+.btn-close::before { content: '✕'; }
+.btn-close:hover { background: rgba(255,255,255,0.3); }
+
+.modal-body {
+    padding: var(--sp-6);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: var(--sp-4) var(--sp-6);
+    border-top: 1px solid var(--clr-border);
+    background: var(--clr-surface);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--sp-3);
+}
+
+/* Form select styling */
+.form-select {
+    width: 100%;
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    color: var(--clr-text-primary);
+    background-color: var(--clr-white);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--sp-4) center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+    padding-right: var(--sp-10, 2.5rem);
+}
+.form-select:focus {
+    outline: none;
+    border-color: var(--clr-primary-400);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Pengajuan kelas pill badges inside modal */
+.pengajuan-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.pengajuan-type-badge.tambah {
+    background: var(--clr-primary-50);
+    color: var(--clr-primary-700);
+    border: 1px solid var(--clr-primary-200);
+}
+.pengajuan-type-badge.ganti {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+/* Pengajuan pending info banner */
+.pengajuan-pending-info {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: var(--radius-lg);
+    font-size: var(--fs-sm);
+    color: #92400e;
+    font-weight: var(--fw-medium);
+}
+
+/* btn-outline-primary fix */
+.btn-outline-primary {
+    border: 1.5px solid var(--clr-primary-500);
+    color: var(--clr-primary-600);
+    background: transparent;
+    font-weight: var(--fw-semibold);
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.btn-outline-primary:hover {
+    background: var(--clr-primary-50);
+    color: var(--clr-primary-700);
+}
+
+/* btn-outline-secondary */
+.btn-outline-secondary {
+    border: 1.5px solid var(--clr-border);
+    color: var(--clr-text-secondary);
+    background: transparent;
+    font-weight: var(--fw-medium);
+}
+.btn-outline-secondary:hover {
+    background: var(--clr-surface-2);
+    color: var(--clr-text-primary);
+}
+
+/* btn-outline-danger */
+.btn-outline-danger {
+    border: 1.5px solid var(--clr-danger);
+    color: var(--clr-danger);
+    background: transparent;
+    font-weight: var(--fw-medium);
+}
+.btn-outline-danger:hover {
+    background: #fff1f2;
+    color: #9b1c1c;
+}
+
+/* ── 22. Modal Responsive ────────────────────────────────────── */
+@media (max-width: 768px) {
+    .modal {
+        padding: var(--sp-3);
+        align-items: flex-end;
+    }
+
+    .modal-dialog {
+        max-width: 100%;
+        animation: modalSlideUpMobile 280ms cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+    }
+
+    @keyframes modalSlideUpMobile {
+        from { opacity: 0; transform: translateY(60px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-content {
+        border-radius: var(--radius-2xl, 1.25rem) var(--radius-2xl, 1.25rem) 0 0;
+        max-height: 88vh;
+    }
+
+    .modal-header {
+        padding: var(--sp-4) var(--sp-5);
+    }
+
+    .modal-body {
+        padding: var(--sp-5);
+    }
+
+    .modal-footer {
+        padding: var(--sp-4) var(--sp-5);
+    }
+
+    .modal-footer .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+

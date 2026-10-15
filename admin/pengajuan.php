@@ -57,6 +57,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = "Pengajuan pengeluaran siswa ditolak.";
                 }
             }
+            elseif ($tipe === 'pengajuan_kelas') {
+                if ($action === 'approve') {
+                    $stmt = $db->prepare("SELECT * FROM pengajuan_kelas WHERE id = ? AND status = 'menunggu'");
+                    $stmt->execute([$id]);
+                    $req = $stmt->fetch();
+                    
+                    if ($req) {
+                        if ($req['jenis_pengajuan'] === 'tambah') {
+                            $cek = $db->prepare("SELECT COUNT(*) FROM siswa_kelas_ekskul WHERE siswa_id = ? AND kelas_ekskul = ?");
+                            $cek->execute([$req['siswa_id'], $req['kelas_baru']]);
+                            if ($cek->fetchColumn() == 0) {
+                                $db->prepare("INSERT INTO siswa_kelas_ekskul (siswa_id, kelas_ekskul) VALUES (?, ?)")
+                                   ->execute([$req['siswa_id'], $req['kelas_baru']]);
+                            }
+                        } elseif ($req['jenis_pengajuan'] === 'ganti') {
+                            $db->prepare("UPDATE siswa_kelas_ekskul SET kelas_ekskul = ? WHERE siswa_id = ? AND kelas_ekskul = ?")
+                               ->execute([$req['kelas_baru'], $req['siswa_id'], $req['kelas_lama']]);
+                        }
+                        
+                        $db->prepare("UPDATE pengajuan_kelas SET status = 'disetujui' WHERE id = ?")->execute([$id]);
+                        $success = "Pengajuan kelas berhasil disetujui.";
+                    }
+                } else {
+                    $db->prepare("UPDATE pengajuan_kelas SET status = 'ditolak' WHERE id = ?")->execute([$id]);
+                    $success = "Pengajuan kelas ditolak.";
+                }
+            }
 
             $db->commit();
         } catch (Exception $e) {
@@ -87,13 +114,24 @@ $stmtKeluar = $db->query("
 ");
 $reqKeluar = $stmtKeluar->fetchAll();
 
+// 3. Ambil pengajuan kelas (menunggu)
+$stmtKelas = $db->query("
+    SELECT pk.*, s.nama as nama_siswa, sd.jenjang, sd.kelas
+    FROM pengajuan_kelas pk
+    JOIN users s ON pk.siswa_id = s.id
+    JOIN siswa_detail sd ON pk.siswa_id = sd.user_id
+    WHERE pk.status = 'menunggu'
+    ORDER BY pk.created_at ASC
+");
+$reqKelas = $stmtKelas->fetchAll();
+
 require_once __DIR__ . '/../includes/admin-header.php';
 ?>
 
 <div class="d-flex justify-content-between align-items-end mb-4">
     <div>
         <h1 class="h3 fw-bold text-primary-700 mb-1">Antrian Pengajuan</h1>
-        <p class="text-secondary mb-0">Kelola permintaan reset password dan pengeluaran siswa.</p>
+        <p class="text-secondary mb-0">Kelola permintaan reset password, pengeluaran siswa, dan pengajuan kelas ekskul.</p>
     </div>
 </div>
 
@@ -212,6 +250,69 @@ require_once __DIR__ . '/../includes/admin-header.php';
                                             <i class="bi bi-check-lg"></i>
                                         </button>
                                         <button type="submit" name="action" value="reject" class="btn btn-sm btn-outline-secondary" title="Tolak Pengajuan" onclick="return confirm('Tolak pengajuan ini dan pertahankan siswa?');">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pengajuan Kelas -->
+    <div style="flex:1; min-width:300px;">
+        <div class="panel">
+            <div class="panel-header" style="background:#e0f2fe;">
+                <h2 class="panel-title" style="color:#0284c7;">
+                    <i class="bi bi-diagram-3-fill"></i> Pengajuan Kelas (<?= count($reqKelas) ?>)
+                </h2>
+            </div>
+            <div class="panel-body p-0 table-responsive">
+                <?php if (empty($reqKelas)): ?>
+                    <div class="p-4 text-center text-muted">Tidak ada pengajuan tambah/ganti kelas.</div>
+                <?php else: ?>
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Siswa</th>
+                                <th>Pengajuan & Alasan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($reqKelas as $pk): ?>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-primary-700"><?= e($pk['nama_siswa']) ?></div>
+                                    <div class="text-xs text-muted"><?= e($pk['jenjang']) ?> - Kelas <?= e($pk['kelas']) ?></div>
+                                    <div class="text-xs text-muted"><i class="bi bi-clock"></i> <?= date('d M H:i', strtotime($pk['created_at'])) ?></div>
+                                </td>
+                                <td>
+                                    <?php if ($pk['jenis_pengajuan'] === 'tambah'): ?>
+                                        <span class="badge badge-primary mb-1">Tambah Kelas</span><br>
+                                        <strong>+ <?= e($pk['kelas_baru']) ?></strong>
+                                    <?php else: ?>
+                                        <span class="badge badge-info mb-1">Ganti Kelas</span><br>
+                                        <span class="text-muted text-decoration-line-through"><?= e($pk['kelas_lama']) ?></span> <i class="bi bi-arrow-right"></i> <strong><?= e($pk['kelas_baru']) ?></strong>
+                                    <?php endif; ?>
+                                    
+                                    <div style="font-size:var(--fs-xs); background:var(--clr-surface-2); padding:4px 6px; border-radius:4px; margin-top:4px;">
+                                        <?= nl2br(e($pk['alasan'])) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <form method="POST" style="display:inline-flex; gap:var(--sp-2);">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="tipe" value="pengajuan_kelas">
+                                        <input type="hidden" name="id" value="<?= $pk['id'] ?>">
+                                        <button type="submit" name="action" value="approve" class="btn btn-sm btn-success" title="Setujui" onclick="return confirm('Setujui pengajuan kelas ini?');">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="btn btn-sm btn-outline-danger" title="Tolak" onclick="return confirm('Tolak pengajuan ini?');">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
                                     </form>

@@ -197,3 +197,51 @@ function uploadProfilePhoto(array $file): ?string
 
     return null;
 }
+
+/**
+ * Auto-migrasi: pastikan tabel absensi menerima status 'alpa'.
+ *
+ * SQLite tidak bisa ALTER CHECK constraint, jadi tabel dibuat ulang
+ * (create new → copy data → drop old → rename). Aman dipanggil berkali-kali:
+ * jika constraint sudah memuat 'alpa', fungsi langsung return.
+ */
+function ensureAbsensiAlpa(PDO $db): void
+{
+    $sql = $db->query("SELECT sql FROM sqlite_master WHERE type='table' AND name='absensi'")->fetchColumn();
+    if (!$sql || str_contains($sql, "'alpa'")) {
+        return;
+    }
+
+    // PRAGMA foreign_keys tidak bisa diubah di dalam transaksi
+    $db->exec('PRAGMA foreign_keys=OFF;');
+    try {
+        $db->beginTransaction();
+        $db->exec("
+            CREATE TABLE absensi_new (
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                sesi_absensi_id  INTEGER NOT NULL REFERENCES sesi_absensi(id) ON DELETE CASCADE,
+                siswa_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                status           TEXT    NOT NULL CHECK(status IN ('hadir','izin','sakit','alpa')),
+                waktu_dicatat    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                dicatat_oleh     INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+                UNIQUE(sesi_absensi_id, siswa_id)
+            )
+        ");
+        $db->exec("
+            INSERT INTO absensi_new (id, sesi_absensi_id, siswa_id, status, waktu_dicatat, dicatat_oleh)
+            SELECT id, sesi_absensi_id, siswa_id, status, waktu_dicatat, dicatat_oleh FROM absensi
+        ");
+        $db->exec("DROP TABLE absensi");
+        $db->exec("ALTER TABLE absensi_new RENAME TO absensi");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_absensi_sesi  ON absensi(sesi_absensi_id)");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_absensi_siswa ON absensi(siswa_id)");
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        error_log('[Migrasi absensi alpa] ' . $e->getMessage());
+    } finally {
+        $db->exec('PRAGMA foreign_keys=ON;');
+    }
+}

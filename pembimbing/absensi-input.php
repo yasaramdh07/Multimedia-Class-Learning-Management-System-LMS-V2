@@ -26,6 +26,9 @@ if (!$sesi) {
     redirect('/pembimbing/absensi.php');
 }
 
+// Pastikan DB sudah mendukung status 'alpa' (auto-migrasi sekali jalan)
+ensureAbsensiAlpa($db);
+
 $ta = $db->query("SELECT id FROM tahun_ajaran WHERE status = 'aktif' LIMIT 1")->fetch();
 $taId = $ta ? $ta['id'] : 0;
 
@@ -39,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             foreach ($_POST['absensi'] as $siswa_id => $status) {
                 // status validasi
-                if (in_array($status, ['hadir', 'izin', 'sakit'])) {
+                if (in_array($status, ['hadir', 'izin', 'sakit', 'alpa'], true)) {
                     // UPSERT logic: cek apakah sudah ada
                     $cek = $db->prepare("SELECT id FROM absensi WHERE sesi_absensi_id = ? AND siswa_id = ?");
                     $cek->execute([$sesiId, $siswa_id]);
@@ -53,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            ->execute([$sesiId, $siswa_id, $status, $userId]);
                     }
                     
-                    // Jika absen (sakit/izin), berikan/update record di tabel nilai (bisa nanti pas rekap, tapi bisa jg trigger skrg. 
+                    // Jika absen (sakit/izin/alpa), berikan/update record di tabel nilai (bisa nanti pas rekap, tapi bisa jg trigger skrg. 
                     // Kita akan hitung nilai_kehadiran nanti saat buka modul rekap atau secara dinamis)
                 }
             }
@@ -103,11 +106,18 @@ $siswaList = $stmtSiswa->fetchAll();
 <div class="panel">
     <div class="panel-header d-flex justify-content-between align-items-center">
         <h2 class="panel-title"><i class="bi bi-list-check me-2"></i> Daftar Siswa (<?= count($siswaList) ?>)</h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+        <?php if (!empty($siswaList)): ?>
+            <button type="button" id="btnAlpaSisa" class="btn btn-sm btn-alpa-sisa" title="Tandai semua siswa yang belum dipilih sebagai Alpa">
+                <i class="bi bi-x-circle me-1"></i> Alpakan yang Belum Diisi
+            </button>
+        <?php endif; ?>
         <?php if ($sesi['status'] === 'tutup'): ?>
             <span class="badge badge-secondary">Sesi Ditutup</span>
         <?php else: ?>
             <span class="badge badge-success">Sesi Terbuka</span>
         <?php endif; ?>
+        </div>
     </div>
     
     <div class="panel-body">
@@ -125,6 +135,7 @@ $siswaList = $stmtSiswa->fetchAll();
                                 <th class="text-center">Hadir</th>
                                 <th class="text-center">Izin</th>
                                 <th class="text-center">Sakit</th>
+                                <th class="text-center">Alpa</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -151,6 +162,9 @@ $siswaList = $stmtSiswa->fetchAll();
                                 </td>
                                 <td class="text-center">
                                     <input type="radio" name="absensi[<?= $s['id'] ?>]" value="sakit" class="form-check-input" style="width:20px;height:20px;" <?= $status === 'sakit' ? 'checked' : '' ?>>
+                                </td>
+                                <td class="text-center">
+                                    <input type="radio" name="absensi[<?= $s['id'] ?>]" value="alpa" class="form-check-input" style="width:20px;height:20px;" title="Alpa (tanpa keterangan)" <?= $status === 'alpa' ? 'checked' : '' ?>>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -180,6 +194,45 @@ input[type="radio"][value="izin"] {
 input[type="radio"][value="sakit"] {
     accent-color: var(--danger-500);
 }
+input[type="radio"][value="alpa"] {
+    accent-color: #334155;
+}
+.btn-alpa-sisa {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all .2s ease;
+}
+.btn-alpa-sisa:hover {
+    background: #334155;
+    color: #fff;
+    border-color: #334155;
+    transform: translateY(-1px);
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('btnAlpaSisa');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const groups = new Set();
+        document.querySelectorAll('input[type="radio"][name^="absensi["]').forEach(r => groups.add(r.name));
+        let count = 0;
+        groups.forEach(name => {
+            const checked = document.querySelector('input[name="' + CSS.escape(name) + '"]:checked');
+            if (!checked) {
+                const alpa = document.querySelector('input[name="' + CSS.escape(name) + '"][value="alpa"]');
+                if (alpa) { alpa.checked = true; count++; }
+            }
+        });
+        alert(count > 0
+            ? count + ' siswa ditandai Alpa. Jangan lupa klik "Simpan Data Kehadiran".'
+            : 'Semua siswa sudah memiliki status.');
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/pembimbing-footer.php'; ?>

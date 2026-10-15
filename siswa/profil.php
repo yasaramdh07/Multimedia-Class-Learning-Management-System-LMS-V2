@@ -12,7 +12,7 @@ $uid = $_SESSION['user_id'];
 $success = '';
 $error   = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'update_profil') {
     verifyCsrf();
 
     $no_wa        = post('no_wa');
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Konfirmasi kata sandi tidak cocok.';
             } else {
                 $db->prepare("UPDATE users SET password = ?, foto_profil_link = ? WHERE id = ?")
-                   ->execute([$pass_baru, $foto_profil_link, $uid]);
+                   ->execute([password_hash($pass_baru, PASSWORD_DEFAULT), $foto_profil_link, $uid]);
             }
         } else {
             $db->prepare("UPDATE users SET foto_profil_link = ? WHERE id = ?")
@@ -63,7 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $siswaInfo = $stmtReload->fetch();
         }
     }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'pengajuan_kelas') {
+    verifyCsrf();
+    $jenis_pengajuan = post('jenis_pengajuan');
+    $kelas_lama = post('kelas_lama') ?: null;
+    $kelas_baru = post('kelas_baru');
+    $alasan = post('alasan');
+
+    if (empty($kelas_baru) || empty($alasan) || empty($jenis_pengajuan)) {
+        $error = 'Harap lengkapi semua kolom pengajuan.';
+    } else {
+        $stmt = $db->prepare("INSERT INTO pengajuan_kelas (siswa_id, jenis_pengajuan, kelas_lama, kelas_baru, alasan) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$uid, $jenis_pengajuan, $kelas_lama, $kelas_baru, $alasan]);
+        $success = 'Pengajuan kelas berhasil dikirim. Menunggu persetujuan Admin.';
+    }
 }
+
+// Cek apakah ada pengajuan kelas yang menunggu
+$stmtCek = $db->prepare("SELECT COUNT(*) FROM pengajuan_kelas WHERE siswa_id = ? AND status = 'menunggu'");
+$stmtCek->execute([$uid]);
+$adaPengajuanMenunggu = $stmtCek->fetchColumn() > 0;
 
 $foto = $siswaInfo['foto_profil_link'] ?: '';
 if ($foto && strpos($foto, 'http') === false) {
@@ -113,6 +132,17 @@ if (!$foto) $foto = BASE_URL . '/assets/img/default-avatar.png';
                     <div><i class="bi bi-whatsapp me-2 text-muted"></i><?= e($siswaInfo['no_wa'] ?: '-') ?></div>
                     <div><i class="bi bi-mortarboard-fill me-2 text-muted"></i>Wali Kelas: <?= e($siswaInfo['wali_kelas'] ?: '-') ?></div>
                 </div>
+                
+                <hr>
+                <?php if ($adaPengajuanMenunggu): ?>
+                    <div class="alert alert-warning text-start mb-0 text-sm p-2">
+                        <i class="bi bi-clock-history me-1"></i> Pengajuan tambah/ganti kelas Anda sedang <strong>menunggu persetujuan</strong> Admin.
+                    </div>
+                <?php else: ?>
+                    <button type="button" class="btn btn-outline-primary w-100 mt-2" data-bs-toggle="modal" data-bs-target="#modalPengajuanKelas">
+                        <i class="bi bi-plus-circle me-1"></i> Ajukan Tambah/Ganti Kelas
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -125,6 +155,7 @@ if (!$foto) $foto = BASE_URL . '/assets/img/default-avatar.png';
             </div>
             <div class="panel-body">
                 <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="update_profil">
                     <?= csrfField() ?>
 
                     <!-- Data yang tidak bisa diedit -->
@@ -205,5 +236,131 @@ if (!$foto) $foto = BASE_URL . '/assets/img/default-avatar.png';
         </div>
     </div>
 </div>
+
+<!-- Modal Pengajuan Kelas -->
+<div class="modal" id="modalPengajuanKelas" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <input type="hidden" name="action" value="pengajuan_kelas">
+                <?= csrfField() ?>
+                <div class="modal-header">
+                    <h5 class="modal-title">Pengajuan Kelas Ekskul</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Pengajuan</label>
+                        <select name="jenis_pengajuan" class="form-select" id="jenisPengajuan" required>
+                            <option value="">-- Pilih --</option>
+                            <option value="tambah">Tambah Kelas (Ikut lebih dari satu)</option>
+                            <option value="ganti">Ganti Kelas (Pindah kelas)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="wrapperKelasLama" style="display: none;">
+                        <label class="form-label">Kelas yang Ingin Dilepas</label>
+                        <select name="kelas_lama" class="form-select" id="selectKelasLama">
+                            <option value="">-- Pilih Kelas Saat Ini --</option>
+                            <?php foreach ($ekskulList as $eks): ?>
+                                <option value="<?= e($eks) ?>"><?= e($eks) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Kelas Baru yang Diinginkan</label>
+                        <select name="kelas_baru" class="form-select" required>
+                            <option value="">-- Pilih Kelas --</option>
+                            <?php foreach (KELAS_EKSKUL as $eks): ?>
+                                <?php if (!in_array($eks, $ekskulList)): ?>
+                                    <option value="<?= e($eks) ?>"><?= e($eks) ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Alasan</label>
+                        <textarea name="alasan" class="form-control" rows="3" required placeholder="Kenapa kamu ingin tambah/pindah kelas?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Kirim Pengajuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ── Modal System ───────────────────────────────────────────
+    function openModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    // Tombol trigger dengan data-bs-toggle="modal"
+    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const target = this.getAttribute('data-bs-target');
+            if (target) openModal(target.replace('#', ''));
+        });
+    });
+
+    // Tombol close dengan data-bs-dismiss="modal"
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) closeModal(modal.id);
+        });
+    });
+
+    // Klik backdrop untuk tutup modal
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal(modal.id);
+        });
+    });
+
+    // Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.show').forEach(function(m) {
+                closeModal(m.id);
+            });
+        }
+    });
+
+    // ── Toggle kelas lama/baru berdasarkan jenis pengajuan ─────
+    const jenisPengajuan = document.getElementById('jenisPengajuan');
+    const wrapperKelasLama = document.getElementById('wrapperKelasLama');
+    const selectKelasLama = document.getElementById('selectKelasLama');
+
+    if (jenisPengajuan) {
+        jenisPengajuan.addEventListener('change', function() {
+            if (this.value === 'ganti') {
+                wrapperKelasLama.style.display = 'block';
+                selectKelasLama.setAttribute('required', 'required');
+            } else {
+                wrapperKelasLama.style.display = 'none';
+                selectKelasLama.removeAttribute('required');
+                selectKelasLama.value = '';
+            }
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/siswa-footer.php'; ?>

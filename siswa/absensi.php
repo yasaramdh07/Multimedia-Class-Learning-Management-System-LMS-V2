@@ -32,6 +32,7 @@ foreach ($allAbsensi as $a) {
 $totalHadir = count(array_filter($allAbsensi, fn($a) => $a['status'] === 'hadir'));
 $totalIzin  = count(array_filter($allAbsensi, fn($a) => $a['status'] === 'izin'));
 $totalSakit = count(array_filter($allAbsensi, fn($a) => $a['status'] === 'sakit'));
+$totalAlpa  = count(array_filter($allAbsensi, fn($a) => $a['status'] === 'alpa'));
 $totalAll   = count($allAbsensi);
 $pctHadir   = $totalAll > 0 ? round($totalHadir / $totalAll * 100) : 0;
 
@@ -61,41 +62,40 @@ rsort($bulanList);
 </div>
 
 <!-- Statistik Summary -->
-<div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
-            <div class="stat-info">
-                <div class="stat-value"><?= $totalHadir ?></div>
-                <div class="stat-label">Hadir</div>
-            </div>
+<div class="stat-grid-5 mb-4">
+    <div class="stat-card">
+        <div class="stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="stat-info">
+            <div class="stat-value"><?= $totalHadir ?></div>
+            <div class="stat-label">Hadir</div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon warning"><i class="bi bi-info-circle-fill"></i></div>
-            <div class="stat-info">
-                <div class="stat-value"><?= $totalIzin ?></div>
-                <div class="stat-label">Izin</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon warning"><i class="bi bi-info-circle-fill"></i></div>
+        <div class="stat-info">
+            <div class="stat-value"><?= $totalIzin ?></div>
+            <div class="stat-label">Izin</div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon danger"><i class="bi bi-heartbreak-fill"></i></div>
-            <div class="stat-info">
-                <div class="stat-value"><?= $totalSakit ?></div>
-                <div class="stat-label">Sakit</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon danger"><i class="bi bi-heartbreak-fill"></i></div>
+        <div class="stat-info">
+            <div class="stat-value"><?= $totalSakit ?></div>
+            <div class="stat-label">Sakit</div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stat-card">
-            <div class="stat-icon primary"><i class="bi bi-percent"></i></div>
-            <div class="stat-info">
-                <div class="stat-value"><?= $pctHadir ?>%</div>
-                <div class="stat-label">Tingkat Kehadiran</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon dark"><i class="bi bi-x-circle-fill"></i></div>
+        <div class="stat-info">
+            <div class="stat-value"><?= $totalAlpa ?></div>
+            <div class="stat-label">Alpa</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon primary"><i class="bi bi-percent"></i></div>
+        <div class="stat-info">
+            <div class="stat-value"><?= $pctHadir ?>%</div>
+            <div class="stat-label">Tingkat Kehadiran</div>
         </div>
     </div>
 </div>
@@ -150,6 +150,7 @@ rsort($bulanList);
                             'hadir' => ['badge-success', 'check-circle-fill', 'Hadir'],
                             'izin'  => ['badge-warning', 'info-circle-fill',  'Izin'],
                             'sakit' => ['badge-danger',  'heartbreak-fill',   'Sakit'],
+                            'alpa'  => ['badge-alpa',    'x-circle-fill',     'Alpa'],
                         ];
                         [$cls, $icon, $lbl] = $badgeMap[$r['status']] ?? ['badge-secondary', 'dash', $r['status']];
                         ?>

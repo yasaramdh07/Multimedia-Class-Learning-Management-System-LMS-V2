@@ -107,6 +107,7 @@ $stmtAbs = $db->prepare("
         SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) as hadir,
         SUM(CASE WHEN a.status = 'izin'  THEN 1 ELSE 0 END) as izin,
         SUM(CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END) as sakit,
+        SUM(CASE WHEN a.status = 'alpa'  THEN 1 ELSE 0 END) as alpa,
         COUNT(*) as total
     FROM absensi a
     JOIN sesi_absensi sa ON a.sesi_absensi_id = sa.id
@@ -115,6 +116,13 @@ $stmtAbs = $db->prepare("
 $stmtAbs->execute([$uid]);
 $absTotal = $stmtAbs->fetch();
 $pctHadir = ($absTotal['total'] > 0) ? round($absTotal['hadir'] / $absTotal['total'] * 100) : 0;
+$pctIzin  = ($absTotal['total'] > 0) ? round($absTotal['izin']  / $absTotal['total'] * 100) : 0;
+$pctSakit = ($absTotal['total'] > 0) ? round($absTotal['sakit'] / $absTotal['total'] * 100) : 0;
+$pctAlpa  = ($absTotal['total'] > 0) ? round($absTotal['alpa']  / $absTotal['total'] * 100) : 0;
+// Titik batas ring chart (kumulatif)
+$ringIzinEnd  = $pctHadir + $pctIzin;
+$ringSakitEnd = $ringIzinEnd + $pctSakit;
+$ringRestClr  = ($absTotal['total'] > 0) ? '#334155' : '#e5e7eb'; // abu netral jika belum ada data
 
 $overallPct = !empty($progressEkskul)
     ? round(array_sum(array_column($progressEkskul, 'pct_total')) / count($progressEkskul))
@@ -302,8 +310,9 @@ $overallPct = !empty($progressEkskul)
                     width: 120px; height: 120px; border-radius: 50%;
                     background: conic-gradient(
                         #22c55e 0% <?= $pctHadir ?>%,
-                        #f59e0b <?= $pctHadir ?>% <?= $pctHadir + ($absTotal['total'] > 0 ? round($absTotal['izin'] / $absTotal['total'] * 100) : 0) ?>%,
-                        #ef4444 <?= $pctHadir + ($absTotal['total'] > 0 ? round($absTotal['izin'] / $absTotal['total'] * 100) : 0) ?>% 100%
+                        #f59e0b <?= $pctHadir ?>% <?= $ringIzinEnd ?>%,
+                        #ef4444 <?= $ringIzinEnd ?>% <?= $ringSakitEnd ?>%,
+                        <?= $ringRestClr ?> <?= $ringSakitEnd ?>% 100%
                     );
                     margin: 0 auto; display: flex; align-items: center; justify-content: center; position: relative;">
                     <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -347,7 +356,19 @@ $overallPct = !empty($progressEkskul)
                                 <span class="text-sm fw-bold text-danger"><?= (int)$absTotal['sakit'] ?> kali</span>
                             </div>
                             <div style="height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden;">
-                                <div style="width: <?= $absTotal['total'] > 0 ? round($absTotal['sakit']/$absTotal['total']*100) : 0 ?>%; height: 100%; background: #ef4444; border-radius: 99px;"></div>
+                                <div style="width: <?= $pctSakit ?>%; height: 100%; background: #ef4444; border-radius: 99px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="width: 14px; height: 14px; background: #334155; border-radius: 4px; flex-shrink: 0;"></span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-sm fw-semibold">Alpa</span>
+                                <span class="text-sm fw-bold" style="color:#334155;"><?= (int)$absTotal['alpa'] ?> kali</span>
+                            </div>
+                            <div style="height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden;">
+                                <div style="width: <?= $pctAlpa ?>%; height: 100%; background: #334155; border-radius: 99px;"></div>
                             </div>
                         </div>
                     </div>

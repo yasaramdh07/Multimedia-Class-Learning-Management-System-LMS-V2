@@ -262,6 +262,21 @@
 .stat-icon.success { background: #dcfce7; color: #16a34a; }
 .stat-icon.warning { background: #fef3c7; color: #d97706; }
 .stat-icon.danger  { background: #fee2e2; color: #dc2626; }
+.stat-icon.dark    { background: #e2e8f0; color: #334155; }
+
+/* Grid 5 kolom untuk rekap absensi (Hadir/Izin/Sakit/Alpa/%) */
+.stat-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--sp-4);
+}
+@media (max-width: 1100px) {
+    .stat-grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .stat-grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+    .stat-grid-5 > :last-child { grid-column: 1 / -1; }
+}
 
 .stat-info { flex: 1; }
 .stat-label { font-size: var(--fs-sm); color: var(--clr-text-secondary); margin-bottom: 2px; }
@@ -343,6 +358,7 @@
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-danger  { background: #fee2e2; color: #991b1b; }
 .badge-secondary{ background: var(--clr-surface-2); color: var(--clr-text-secondary); }
+.badge-alpa    { background: #334155; color: #f8fafc; }
 
 /* Online Status Dots */
 .status-dot {

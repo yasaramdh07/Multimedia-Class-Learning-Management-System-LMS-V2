@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS absensi (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     sesi_absensi_id  INTEGER NOT NULL REFERENCES sesi_absensi(id) ON DELETE CASCADE,
     siswa_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status           TEXT    NOT NULL CHECK(status IN ('hadir','izin','sakit')),
+    status           TEXT    NOT NULL CHECK(status IN ('hadir','izin','sakit','alpa')),
     waktu_dicatat    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
     dicatat_oleh     INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     UNIQUE(sesi_absensi_id, siswa_id)  -- 1 siswa 1 catatan per sesi
