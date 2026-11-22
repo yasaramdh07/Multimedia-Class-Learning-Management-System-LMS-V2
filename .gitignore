@@ -1,0 +1,12 @@
+# Database SQLite (berisi data user — jangan di-commit)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.db
+
+# Sistem / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

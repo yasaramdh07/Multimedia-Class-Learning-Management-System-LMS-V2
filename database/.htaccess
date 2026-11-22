@@ -1,0 +1,14 @@
+# Apache .htaccess — Proteksi folder /database/
+# Blokir semua akses HTTP langsung ke folder ini.
+# File SQLite tidak boleh bisa diakses via URL publik.
+
+<IfModule mod_authz_core.c>
+    # Apache 2.4+
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    # Apache 2.2 fallback
+    Order deny,allow
+    Deny from all
+</IfModule>
