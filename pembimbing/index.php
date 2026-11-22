@@ -151,24 +151,24 @@ $recentSesi = $stmtSesi->fetchAll();
     
     <!-- Kolom Kanan -->
     <div class="col-md-4 mb-4">
-        <div class="panel" style="height: 100%;">
+        <div class="panel">
             <div class="panel-header">
                 <h2 class="panel-title"><i class="bi bi-card-checklist me-2"></i> Jalan Pintas</h2>
             </div>
             <div class="panel-body d-flex flex-column gap-3">
-                <a href="<?= e(BASE_URL) ?>/pembimbing/materi-form.php" class="btn btn-outline-primary text-start">
+                <a href="<?= e(BASE_URL) ?>/pembimbing/materi-form.php" class="btn btn-outline-primary w-100 justify-content-start">
                     <i class="bi bi-plus-circle me-2"></i> Tambah Materi Baru
                 </a>
-                <a href="<?= e(BASE_URL) ?>/pembimbing/tugas-form.php" class="btn btn-outline-primary text-start">
+                <a href="<?= e(BASE_URL) ?>/pembimbing/tugas-form.php" class="btn btn-outline-primary w-100 justify-content-start">
                     <i class="bi bi-plus-circle me-2"></i> Tambah Tugas Baru
                 </a>
-                <a href="<?= e(BASE_URL) ?>/pembimbing/absensi.php" class="btn btn-outline-success text-start">
+                <a href="<?= e(BASE_URL) ?>/pembimbing/absensi.php" class="btn btn-outline-success w-100 justify-content-start">
                     <i class="bi bi-journal-check me-2"></i> Buka Sesi Absensi
                 </a>
-                <a href="<?= e(BASE_URL) ?>/pembimbing/verifikasi.php" class="btn btn-outline-warning text-start">
-                    <i class="bi bi-check2-square me-2"></i> Verifikasi Tugas
+                <a href="<?= e(BASE_URL) ?>/pembimbing/verifikasi.php" class="btn btn-outline-warning w-100 justify-content-between">
+                    <span><i class="bi bi-check2-square me-2"></i> Verifikasi Tugas</span>
                     <?php if ($pendingVerif > 0): ?>
-                        <span class="badge bg-warning text-dark float-end"><?= $pendingVerif ?></span>
+                        <span class="badge badge-warning"><?= (int)$pendingVerif ?></span>
                     <?php endif; ?>
                 </a>
             </div>

@@ -782,6 +782,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .d-flex   { display: flex; }
+.flex-column { flex-direction: column; }
+.justify-content-start { justify-content: flex-start; }
+.justify-content-between { justify-content: space-between; }
+.w-100    { width: 100%; }
 .d-grid   { display: grid; }
 .d-none   { display: none; }
 .d-block  { display: block; }
@@ -1314,6 +1318,32 @@ h1, h2, h3, h4, h5, h6 {
 .btn-outline-danger:hover {
     background: #fff1f2;
     color: #9b1c1c;
+}
+
+/* btn-outline-success */
+.btn-outline-success {
+    border: 1.5px solid var(--clr-success);
+    color: #15803d;
+    background: transparent;
+    font-weight: var(--fw-semibold);
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.btn-outline-success:hover {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+/* btn-outline-warning */
+.btn-outline-warning {
+    border: 1.5px solid var(--clr-warning);
+    color: #b45309;
+    background: transparent;
+    font-weight: var(--fw-semibold);
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.btn-outline-warning:hover {
+    background: #fffbeb;
+    color: #92400e;
 }
 
 /* ── 22. Modal Responsive ────────────────────────────────────── */
